@@ -1,0 +1,54 @@
+name: devto
+
+on:
+  push:
+    branches: [main]
+    paths: ['posts/**', 'scripts/**']
+  pull_request:
+    paths: ['posts/**', 'scripts/**']
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: '投稿する記事のslug（空なら posts/ 全件）'
+        required: false
+
+jobs:
+  # push/PR では投稿せず、frontmatter と本文の規約だけ検査する
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22', cache: npm }
+      - run: npm ci
+      - run: npm run build
+      - run: npm run publish -- --dry-run
+      - run: npm run wc
+
+  # 実際の投稿は手動トリガーのみ。published:false なので下書きが作られる
+  publish:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions: { contents: write }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22', cache: npm }
+      - run: npm ci
+      - run: npm run build
+      - name: Publish to DEV
+        env:
+          DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
+        run: |
+          if [ -n "${{ inputs.slug }}" ]; then
+            npm run publish -- --only "${{ inputs.slug }}"
+          else
+            npm run publish
+          fi
+      - name: Commit back devto_id
+        run: |
+          git config user.name  github-actions
+          git config user.email github-actions@github.com
+          git add posts assets
+          git diff --staged --quiet || git commit -m "chore: DEV の記事IDと図を反映"
+          git push

@@ -1,0 +1,14 @@
+{
+  "name": "devto-content",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "publish": "node scripts/publish.mjs",
+    "wc": "node scripts/wordcount.mjs"
+  },
+  "devDependencies": {
+    "@mermaid-js/mermaid-cli": "^11.4.2",
+    "gray-matter": "^4.0.3"
+  }
+}
