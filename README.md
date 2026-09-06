@@ -25,11 +25,17 @@ npm run publish -- --dry-run   # 規約チェックのみ
 ```
 
 投稿するには DEV の API key が要る（`https://dev.to/settings/extensions`）。
+リポジトリ直下の `.env` に置けば `publish` が自動で読む（gitignore 済み）。
+
+```
+DEVTO_API_KEY=xxxx
+```
 
 ```bash
-export DEVTO_API_KEY=xxxx
 npm run publish -- --only my-post
 ```
+
+> API key は**公開している dotfiles に書かないこと**。`.env` か、CI なら GitHub Secrets に置く。
 
 - `published: false` 固定なので、作られるのは**下書き**。公開は DEV のダッシュボードから手動
 - 初回投稿で採番された id が `posts/*.md` の `devto_id` に書き戻され、以降は更新（PUT）になる

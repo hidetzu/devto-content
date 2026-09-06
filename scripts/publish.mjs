@@ -9,6 +9,10 @@ import matter from 'gray-matter';
 import { LOCAL_KEYS } from './config.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+
+// ローカル実行用。CI では Secrets から環境変数が入るので .env は無くてよい
+try { process.loadEnvFile(join(ROOT, '.env')); } catch { /* 無ければ無視 */ }
+
 const DIST = join(ROOT, 'dist');
 const POSTS = join(ROOT, 'posts');
 const API = 'https://dev.to/api/articles';
