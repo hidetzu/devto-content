@@ -2,7 +2,7 @@
 title: "99.7% Rejected in 84ms: Why I Stopped Making the Generator Smarter"
 published: false
 description: "A puzzle generator with a 0.26% acceptance rate, and what it says about building on top of LLM output."
-tags: llm, go, architecture, algorithms
+tags: llm, verification, architecture, go
 canonical_url: https://zenn.dev/hidetzu/articles/verigen-generate-verify-loop
 cover_image: ""
 zenn_source: verigen-generate-verify-loop
@@ -65,12 +65,12 @@ I never tried to raise that number. Making the generator cleverer costs my time;
 
 The loop is only worth as much as the assertions the verifier can actually make. For alphametics, that is:
 
-| Guarantee | How |
-| --- | --- |
-| A solution exists | Exhaustive search, column by column, carrying digits |
-| The solution is unique | Keep searching after the first hit; reject if a second exists |
-| More than 10 distinct letters means no solution | Pigeonhole. Rejected before the search runs |
-| No leading zero | Constrain the first letter of every multi-character word |
+| Guarantee                                       | How                                                           |
+| ----------------------------------------------- | ------------------------------------------------------------- |
+| A solution exists                               | Exhaustive search, column by column, carrying digits          |
+| The solution is unique                          | Keep searching after the first hit; reject if a second exists |
+| More than 10 distinct letters means no solution | Pigeonhole. Rejected before the search runs                   |
+| No leading zero                                 | Constrain the first letter of every multi-character word      |
 
 Three design decisions made that table hold up.
 
@@ -84,13 +84,21 @@ Three design decisions made that table hold up.
 
 Swap the random generator for an LLM and the diagram is unchanged. That substitution is not a new idea in 2026 — in the major application areas it is already standard practice.
 
-**Code generation.** Formalised as loop engineering: hooks and agent harnesses that refuse to let a run finish until tests, types and lint pass. Cognition's 2025 annual review put the merge rate of Devin-generated PRs at 67%, up from 34% the year before.
+**Code generation.** Formalised as loop engineering: hooks and agent harnesses that refuse to let a run finish until tests, types and lint pass. Cognition's 2025 annual review put the merge rate of Devin-generated PRs at 67%, up from 34% the year before — while noting that roughly a third of those PRs still need substantial rework. Passing the verifier is the floor, not the goal.
 
 **SQL generation.** Snowflake's Cortex Analyst moved automatic optimisation of verified queries into preview in December 2025. Vanna AI ships self-correction from dry-run errors as a standard feature. `EXPLAIN`, schema matching, and retry-on-execution-error are table stakes for text-to-SQL products.
 
 **Structured output.** This one has gone past verification entirely: XGrammar constrains decoding so schema-violating tokens are never emitted, and it is now a standard backend in vLLM, SGLang and TensorRT. OpenAI's Structured Outputs works the same way. "Parse the JSON, catch the error, retry" is close to obsolete.
 
-**Proofs.** The most spectacular case. AlphaProof, paired with AlphaGeometry 2, scored 28/42 at the 2024 IMO — silver-medal level. In May 2026 a DeepMind follow-up system reported on arXiv solving 9 of 353 open Erdős problems. The mechanism is continuous with `verigen`: generate candidate proofs, run them through Lean 4 as a mechanical verifier, repeat until one passes, at an enormous scale. DeepSeek-Prover-V2 is the same shape. What exhaustive search does for "this puzzle has exactly one solution", Lean does for "this theorem holds".
+**Proofs.** The most spectacular case, and the most instructive, because this is where the pattern was tested against its own alternative.
+
+AlphaProof, paired with AlphaGeometry 2, scored 28/42 at the 2024 IMO — silver-medal level, one point under the gold threshold. The mechanism is continuous with `verigen`: generate candidate proofs, run them through Lean 4 as a mechanical verifier, repeat until one passes, at enormous scale. DeepSeek-Prover-V2 is the same shape. What exhaustive search does for "this puzzle has exactly one solution", Lean does for "this theorem holds".
+
+Then the following year, the verifier came out. Gemini Deep Think took gold at the 2025 IMO — 35/42, five of six problems — reasoning end-to-end in natural language, inside the human time limit, with no formal proof assistant anywhere in the loop, at roughly two orders of magnitude better inference efficiency than the 2024 approach. On the face of it that is a counterexample to everything I have argued.
+
+Look at what each one was solving. An olympiad problem is an exam question: a solution is known to exist, the search space is bounded by the syllabus, and a human grader decides at the end. Deep Think did not need a mechanical verifier because a mechanical verifier was never the binding constraint there. Now compare AlphaProof Nexus, which in May 2026 reported solving 9 of 353 open Erdős problems and 44 of 492 open OEIS conjectures ([arXiv:2605.22763](https://arxiv.org/abs/2605.22763)) — including two open for 56 years. Nobody can grade that output. There is no answer key, and no human referee who can check the volume of candidates the system produces. Lean is not decoration in that setting; it is the only thing standing between "solved" and "claimed".
+
+So the split is not verifier versus no verifier. It is whether anything else can decide the question. Where a competent grader exists, a strict verifier is an optimisation you may be able to skip. Where none exists, it is the entire basis on which you are allowed to use the word "solved".
 
 The common precondition is that **the verifier can decide the question mechanically**. Where it cannot — is this prose any good? — the whole design has nothing to offer.
 
@@ -108,7 +116,7 @@ Three conditions, in order of how often they are the one that breaks:
 
 **The verifier must be strict — and honest about its limits.** A verifier that appears to guarantee something it does not makes the entire loop a lie. Assert nothing you cannot assert. Labelling my difficulty score a proxy is the small version of this; treating "the tests pass" as "the code is correct" is the expensive version.
 
-**Generation must be cheap.** 1,947 attempts in 84ms is why a 0.26% acceptance rate is survivable. An LLM call is hundreds of milliseconds to seconds, so the same acceptance rate would be absurd. With an expensive generator you have to tune both sides: prompts that raise the hit rate *and* a verifier strict enough to be worth the round trip.
+**Generation must be cheap.** 1,947 attempts in 84ms is why a 0.26% acceptance rate is survivable. An LLM call is hundreds of milliseconds to seconds, so the same acceptance rate would be absurd. With an expensive generator you have to tune both sides: prompts that raise the hit rate _and_ a verifier strict enough to be worth the round trip.
 
 **Verification must not cost more than generation.** Exhaustive search is expensive in principle and still fits inside those 84ms. Test suites and type checks do not always fit so comfortably. If verifying costs more than generating, the loop does not close.
 
