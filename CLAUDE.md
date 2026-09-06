@@ -65,7 +65,8 @@ devto_id:                  # filled in by publish after the first POST
 ---
 ```
 
-- `published: false` always. Publishing happens by hand from the DEV dashboard
+- `published: false` always, in the source. It governs creation only: publishing happens by
+  hand from the DEV dashboard, and updates never send the field back
 - `tags`: **at most 4, lowercase alphanumeric only** (no hyphens)
 - `canonical_url` is **required whenever `zenn_source` is set** — it keeps the
   SEO weight on Zenn and avoids a duplicate-content penalty. Leave it empty only

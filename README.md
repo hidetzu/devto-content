@@ -37,7 +37,9 @@ devto_id:
 
 - `tags`: at most 4, lowercase alphanumeric only (no hyphens)
 - `canonical_url`: points at the original Zenn article. Required whenever `zenn_source` is set; empty only for a post written for DEV first
-- `published`: always `false` — posts land on DEV as drafts and are published by hand
+- `published`: always `false` — it governs creation only. Posts land on DEV as drafts and are
+  published by hand. After the first `POST`, DEV owns the published state and `publish` stops
+  sending the field, so updating a live article never takes it offline
 - `zenn_source` and `devto_id` are local bookkeeping and are stripped before the API call
 
 ## Building

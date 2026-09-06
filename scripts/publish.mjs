@@ -39,6 +39,8 @@ function validate(slug, data, body) {
   if (data.canonical_url && !/^https:\/\/\S+$/.test(data.canonical_url)) {
     errs.push(`canonical_url "${data.canonical_url}" is not an https URL`);
   }
+  // Governs creation only. After the first POST, DEV owns the published state
+  // and this field is not sent, so it stays false in the source forever.
   if (data.published !== false) errs.push('published is not false');
   const tags = String(data.tags ?? '').split(',').map((t) => t.trim()).filter(Boolean);
   if (tags.length > 4) errs.push(`${tags.length} tags (4 is the maximum)`);
@@ -95,10 +97,15 @@ for (const [i, file] of files.entries()) {
   const tags = validate(slug, data, body);
   if (!tags) { failed = true; continue; }
 
+  const id = data.devto_id;
+
+  // Publication state belongs to DEV once the article exists. Creating always
+  // creates a draft; updating omits the field entirely, so a PUT can never
+  // unpublish an article that was published by hand from the dashboard.
   const article = {
     title: data.title,
     body_markdown: body,
-    published: false,
+    ...(id ? {} : { published: false }),
     tags,
     description: data.description ?? '',
     ...(data.canonical_url ? { canonical_url: data.canonical_url } : {}),
@@ -107,9 +114,9 @@ for (const [i, file] of files.entries()) {
   };
   for (const k of LOCAL_KEYS) delete article[k];
 
-  const id = data.devto_id;
   if (dryRun) {
     console.log(`[dry-run] ${id ? `PUT ${API}/${id}` : `POST ${API}`} :: ${slug}`);
+    console.log(`  state: ${id ? 'left as-is on DEV' : 'created as a draft'}`);
     console.log(`  title: ${article.title}`);
     console.log(`  tags:  ${tags.join(', ')}`);
     console.log(`  canon: ${article.canonical_url ?? '(none - DEV original)'}`);
