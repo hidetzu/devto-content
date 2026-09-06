@@ -10,28 +10,28 @@ devto_id:
 ---
 
 <!--
-書き出しの前に CLAUDE.md を読むこと。翻訳ではなく書き直す。
-冒頭2〜3文で結論。導入見出しは置かない。1,200〜1,800 words。
+Read CLAUDE.md before starting. Rewrite, don't translate.
+Conclusion in the first 2-3 sentences. No intro heading. 1,200-1,800 words.
 -->
 
-Hook: 何が起きたか / 何を測ったか。ここで結論を出す。
+Hook: what happened, or what was measured. The conclusion goes here.
 
 ## The setup
 
-再現条件・バージョン・データ量。
+Preconditions, versions, data sizes.
 
 ## What actually happened
 
-計測値、コード、出力。
+Measurements, code, output.
 
 ## Why
 
-仕組みの説明。図が要るなら ```mermaid で書けば build が PNG 化する。
+The mechanism. If it needs a diagram, write ```mermaid and the build will rasterise it.
 
 ## Trade-offs
 
-採用しない場合、壊れる場合。
+When not to do this, and how it breaks.
 
 ## Takeaway
 
-読者が明日使える1行。
+One line the reader can use tomorrow.

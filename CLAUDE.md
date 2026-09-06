@@ -1,93 +1,98 @@
-# dev.to 記事 執筆ルール
+# Writing rules for dev.to
 
-このリポジトリは dev.to (DEV Community) 向けの**英語記事**を管理する。
-元ネタは Zenn 記事（`~/work/private/zenn-content`）だが、**翻訳ではなく書き直す**。
+This repository holds **English** articles for dev.to (DEV Community).
+Most of them start as a Japanese article in `~/work/private/zenn-content`,
+but they are **rewritten, not translated**.
 
-## 大原則: Translate ではなく Rewrite
+## The one rule that matters: rewrite, don't translate
 
-Zenn 側のルール（`はじめに`/`おわりに`、絵文字h2、背景→全体像→詳細）は
-日本語記事の型であり、そのまま英訳すると DEV では機能しない。
-**Zenn の構成ルールをこのリポジトリに持ち込まないこと。**
+The Zenn conventions — `はじめに` / `おわりに` sections, emoji in h2 headings,
+background-first structure — belong to Japanese technical writing. Translated
+literally they read stiff and bury the point. **Do not carry them into this repo.**
 
-| Zenn (日本語) | dev.to (英語) |
+| Zenn (Japanese) | dev.to (English) |
 |---|---|
-| `## 🎯 はじめに` で背景から入る | 冒頭2〜3文で主張と結論を出す。導入見出しは置かない |
-| `## 👋 おわりに` で締める | `## What I'd do differently` 等、内容を名前にした見出しで締める |
-| h2 に絵文字 | 絵文字は使わない。sentence case |
-| 16,000字の記事もあり | **1,200〜1,800 words**。超えるなら分割するか削る |
-| `:::message` | `> **Note:** ...` の blockquote |
-| ```mermaid | ソースには書いてよい。`npm run build` が PNG に焼く |
+| Opens with `## 🎯 はじめに` and context | Claim and conclusion in the first 2-3 sentences. No intro heading |
+| Closes with `## 👋 おわりに` | Close with a heading that names its content, e.g. `## What I'd do differently` |
+| Emoji in h2 | No emoji. Sentence case |
+| Posts run to 16,000 characters | **1,200-1,800 words.** Split it or cut it |
+| `:::message` | `> **Note:** ...` blockquote |
+| ```mermaid | Fine in the source. `npm run build` rasterises it |
 
-## 記事の構成
+## Structure
 
-1. **Hook（2〜3文）** — 何が起きたか / 何を測ったか。結論を先に出す
-2. **The setup** — 前提と再現条件。数字とバージョンを明示
-3. **What actually happened** — 本題。計測値・コード・出力
-4. **Why** — 仕組みの説明
-5. **Trade-offs** — 採用しない場合、壊れる場合
-6. **Takeaway** — 読者が明日使える1行
+1. **Hook (2-3 sentences)** — what happened, or what was measured. Land the conclusion here
+2. **The setup** — preconditions, versions, data sizes. Be specific
+3. **What actually happened** — the body: measurements, code, output
+4. **Why** — the mechanism
+5. **Trade-offs** — when not to do this, and how it breaks
+6. **Takeaway** — one line the reader can use tomorrow
 
-導入で `In this article, we will explore...` と書かない。冷たく始める。
+Never open with "In this article, we will explore...". Start cold.
 
-## 文章スタイル
+## Style
 
-- 一人称は `I`。能動態
-- 1文を短く。1段落は3〜4文まで
-- 形容詞より数値（`much faster` ではなく `9m28s → 18s`）
-- 日本ローカルな前提（国内SaaS、日本語特有の事情）は**説明を足すか、落とす**
-- 専門用語は初出で1行の説明を添える
+- First person, `I`. Active voice
+- Short sentences. Three or four per paragraph at most
+- Numbers instead of adjectives (`9m28s → 18s`, not `much faster`)
+- Japan-specific context (domestic SaaS, Japanese-language specifics) needs
+  explaining or cutting — the reader has none of it
+- Define a term the first time it appears, in one line
 
-## タイトル
+## Titles
 
-具体物 + 数値 + 意外性。日本語の「— 」で繋ぐ構文は英語では機能しない。
+Concrete noun + number + something unexpected. The Japanese habit of joining two
+clauses with an em dash does not work in English.
 
 ```
-NG: OFFSET Doesn't Skip Rows - The Slowness of Pagination Measured on 10 Million PostgreSQL Rows
-OK: OFFSET Doesn't Skip Rows: What 10M Rows in PostgreSQL Actually Cost
+Bad:  OFFSET Doesn't Skip Rows - The Slowness of Pagination Measured on 10 Million PostgreSQL Rows
+Good: OFFSET Doesn't Skip Rows: What 10M Rows in PostgreSQL Actually Cost
 ```
 
-## frontmatter
+## Front matter
 
 ```yaml
 ---
 title: "OFFSET Doesn't Skip Rows"
 published: false
-description: "One sentence. Shown in the feed card."
+description: "One sentence. Shown on the feed card."
 tags: postgres, sql, performance, database
 canonical_url: https://zenn.dev/hidetzu/articles/<zenn-slug>
 cover_image: ""
-series: ""            # 連載時のみ。空なら削除してよい
-zenn_source: <zenn-slug>   # 出典管理用。publish 時に除去される
-devto_id:             # 初回投稿後に publish スクリプトが書き戻す
+series: ""                 # only for a multi-part post; delete the key otherwise
+zenn_source: <zenn-slug>   # bookkeeping; stripped before the API call
+devto_id:                  # filled in by publish after the first POST
 ---
 ```
 
-- `published: false` 固定。公開は DEV のダッシュボードから手動
-- `tags` は**最大4個・小文字英数のみ**（ハイフン不可）
-- `canonical_url` は**必須**。Zenn 側に評価を寄せ、重複コンテンツ扱いを避ける
-- `zenn_source` / `devto_id` は DEV には送られない
+- `published: false` always. Publishing happens by hand from the DEV dashboard
+- `tags`: **at most 4, lowercase alphanumeric only** (no hyphens)
+- `canonical_url` is **required** — it keeps the SEO weight on Zenn and avoids
+  a duplicate-content penalty
 
-## 図解
+## Diagrams
 
-- ソースには ` ```mermaid ` を書いてよい。DEV は mermaid を描画しないため `npm run build` が PNG 化する
-- 背景は白で焼く（DEV のダークモードで透過背景だと文字が消えるため）
-- 図 → テキスト説明の順
+- Write ` ```mermaid ` in the source. DEV does not render mermaid, so
+  `npm run build` turns each block into a PNG
+- Rendered on a white background: a transparent one vanishes against DEV's dark theme
+- Diagram first, then the prose explaining it
 
-## ワークフロー
+## Workflow
 
 ```bash
-npm run build              # mermaid を PNG 化し dist/ を生成
+npm run build              # mermaid -> PNG, writes dist/
+npm run wc                 # word count
 npm run publish -- --dry-run
-npm run publish            # DEVTO_API_KEY が必要
+npm run publish            # needs DEVTO_API_KEY
 ```
 
-## チェックリスト
+## Checklist
 
-- [ ] 冒頭2〜3文で結論が出ているか
-- [ ] 1,200〜1,800 words に収まっているか
-- [ ] `はじめに`/`おわりに` を直訳した見出しが残っていないか
-- [ ] h2 に絵文字が残っていないか
-- [ ] `tags` が4個以内・小文字英数のみか
-- [ ] `canonical_url` が正しい Zenn URL か
-- [ ] `published: false` か
-- [ ] 日本ローカルな前提に説明があるか
+- [ ] Is the conclusion in the first 2-3 sentences?
+- [ ] Is it between 1,200 and 1,800 words?
+- [ ] Any headings left over from translating `はじめに` / `おわりに`?
+- [ ] Any emoji left in h2?
+- [ ] `tags`: 4 or fewer, lowercase alphanumeric?
+- [ ] Does `canonical_url` point at the right Zenn article?
+- [ ] Is `published` still `false`?
+- [ ] Is every Japan-specific assumption either explained or gone?

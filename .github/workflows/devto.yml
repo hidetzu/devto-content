@@ -9,11 +9,11 @@ on:
   workflow_dispatch:
     inputs:
       slug:
-        description: '投稿する記事のslug（空なら posts/ 全件）'
+        description: 'Slug to publish (empty publishes everything in posts/)'
         required: false
 
 jobs:
-  # push/PR では投稿せず、frontmatter と本文の規約だけ検査する
+  # push and pull_request never publish. They only check the conventions.
   validate:
     runs-on: ubuntu-latest
     steps:
@@ -25,7 +25,7 @@ jobs:
       - run: npm run publish -- --dry-run
       - run: npm run wc
 
-  # 実際の投稿は手動トリガーのみ。published:false なので下書きが作られる
+  # Publishing is manual only. Articles are published:false, so this creates drafts.
   publish:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
@@ -50,5 +50,5 @@ jobs:
           git config user.name  github-actions
           git config user.email github-actions@github.com
           git add posts assets
-          git diff --staged --quiet || git commit -m "chore: DEV の記事IDと図を反映"
+          git diff --staged --quiet || git commit -m "chore: record DEV article ids and diagrams"
           git push

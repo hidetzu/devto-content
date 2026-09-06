@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// dist/*.md を DEV API v1 に投げる。
-//   初回は POST /api/articles、2回目以降は PUT /api/articles/:id
-//   採番された id は posts/<slug>.md の devto_id に書き戻す
+// Sends dist/*.md to the DEV API v1.
+//   First publish: POST /api/articles. Every one after: PUT /api/articles/:id.
+//   The id DEV assigns is written back into posts/<slug>.md as devto_id.
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -10,8 +10,8 @@ import { LOCAL_KEYS } from './config.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-// ローカル実行用。CI では Secrets から環境変数が入るので .env は無くてよい
-try { process.loadEnvFile(join(ROOT, '.env')); } catch { /* 無ければ無視 */ }
+// Local runs read .env; in CI the key arrives from repository secrets.
+try { process.loadEnvFile(join(ROOT, '.env')); } catch { /* absent is fine */ }
 
 const DIST = join(ROOT, 'dist');
 const POSTS = join(ROOT, 'posts');
@@ -23,24 +23,25 @@ const only = args.includes('--only') ? args[args.indexOf('--only') + 1] : undefi
 const apiKey = process.env.DEVTO_API_KEY;
 
 if (!dryRun && !apiKey) {
-  console.error('DEVTO_API_KEY が未設定。--dry-run で内容だけ確認できる');
+  console.error('DEVTO_API_KEY is not set. Use --dry-run to check the content only.');
   process.exit(1);
 }
 
+// Catches the mistakes DEV either accepts silently or rejects unhelpfully.
 function validate(slug, data, body) {
   const errs = [];
-  if (!data.title) errs.push('title がない');
-  if (!data.canonical_url) errs.push('canonical_url がない（Zenn記事を指すこと）');
-  if (data.published !== false) errs.push('published が false でない');
+  if (!data.title) errs.push('no title');
+  if (!data.canonical_url) errs.push('no canonical_url (it must point at the Zenn article)');
+  if (data.published !== false) errs.push('published is not false');
   const tags = String(data.tags ?? '').split(',').map((t) => t.trim()).filter(Boolean);
-  if (tags.length > 4) errs.push(`tags が ${tags.length} 個（最大4）`);
+  if (tags.length > 4) errs.push(`${tags.length} tags (4 is the maximum)`);
   for (const t of tags) {
-    if (!/^[a-z0-9]+$/.test(t)) errs.push(`tag "${t}" は小文字英数のみ`);
+    if (!/^[a-z0-9]+$/.test(t)) errs.push(`tag "${t}": lowercase alphanumeric only`);
   }
-  if (/```mermaid/.test(body)) errs.push('mermaid が残っている（npm run build を先に）');
-  if (/^#\s/m.test(body)) errs.push('本文に h1 がある（title と重複するので削る）');
+  if (/```mermaid/.test(body)) errs.push('mermaid block left in the body (run npm run build first)');
+  if (/^#\s/m.test(body)) errs.push('h1 in the body (it duplicates the title; drop it)');
   const words = body.replace(/```[\s\S]*?```/g, '').split(/\s+/).filter(Boolean).length;
-  if (words > 2200) console.warn(`  warn: ${words} words（DEV では長い。分割を検討）`);
+  if (words > 2200) console.warn(`  warn: ${words} words, long for DEV. Consider splitting it.`);
   if (errs.length) {
     console.error(`${slug}:\n  - ${errs.join('\n  - ')}`);
     return null;
@@ -61,17 +62,18 @@ const built = readdirSync(DIST).filter((f) => f.endsWith('.md'));
 const files = only ? built.filter((f) => f === `${only}.md`) : built;
 
 if (files.length === 0) {
-  // 記事がまだ無いのは正常な状態。--only の指定ミスと、build 忘れだけを失敗にする
+  // Having no articles yet is a normal state. Only a bad --only, or a
+  // forgotten build, should fail.
   if (only) {
-    console.error(`--only ${only} に該当する記事がない`);
+    console.error(`--only ${only} matched no article`);
     process.exit(1);
   }
   const sources = readdirSync(POSTS).filter((f) => f.endsWith('.md') && !f.startsWith('_'));
   if (sources.length > 0) {
-    console.error('dist/ が空。npm run build を先に実行すること');
+    console.error('dist/ is empty. Run npm run build first.');
     process.exit(1);
   }
-  console.log('posts/ に記事がない。何もしない');
+  console.log('no articles in posts/, nothing to do');
   process.exit(0);
 }
 
@@ -119,7 +121,7 @@ for (const [i, file] of files.entries()) {
   if (!id) writeBackId(slug, json.id);
   console.log(`${id ? 'updated' : 'created'} ${slug} -> ${json.url ?? json.id}`);
 
-  // DEV API のレート制限（連続作成が弾かれる）を避ける
+  // DEV rate-limits consecutive article creation.
   if (i < files.length - 1) await new Promise((r) => setTimeout(r, 3000));
 }
 

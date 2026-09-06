@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // posts/*.md -> dist/*.md
-//   - ```mermaid ブロックを PNG に焼いて assets/ に置き、絶対URLの画像参照に差し替える
-//   - それ以外の本文は触らない
+//   Rasterises every ```mermaid block into assets/ and rewrites it as an
+//   absolute image reference. Everything else in the body is left alone.
 import { createHash } from 'node:crypto';
 import { mkdirSync, readdirSync, readFileSync, writeFileSync, existsSync, rmSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
@@ -23,15 +23,17 @@ mkdirSync(TMP, { recursive: true });
 const MERMAID = /^```mermaid[^\n]*\n([\s\S]*?)^```[ \t]*$/gm;
 
 function renderMermaid(slug, code) {
-  // 内容のハッシュをファイル名に含めるので、変更がなければ再生成しない
+  // The filename carries a hash of the source, so an unchanged diagram is
+  // never re-rendered.
   const hash = createHash('sha1').update(code).digest('hex').slice(0, 8);
   const name = `${slug}-${hash}.png`;
   const out = join(ASSETS, name);
   if (!existsSync(out)) {
     const src = join(TMP, `${slug}-${hash}.mmd`);
     writeFileSync(src, code);
-    // -b white: DEV のダークモードで透過背景だと線と文字が消えるため
-    // -s 2:     Retina 相当
+    // -b white: a transparent background makes the lines and labels vanish
+    //           against DEV's dark theme
+    // -s 2:     retina
     execFileSync('npx', [
       '-y', '-p', '@mermaid-js/mermaid-cli', 'mmdc',
       '-i', src, '-o', out, '-b', 'white', '-s', '2',
@@ -43,7 +45,7 @@ function renderMermaid(slug, code) {
 }
 
 const files = readdirSync(POSTS).filter((f) => f.endsWith('.md') && !f.startsWith('_'));
-if (files.length === 0) console.log('posts/ に記事がない');
+if (files.length === 0) console.log('no articles in posts/');
 
 for (const file of files) {
   const slug = file.replace(/\.md$/, '');
@@ -62,4 +64,4 @@ for (const file of files) {
 }
 
 rmSync(TMP, { recursive: true, force: true });
-console.log('done. 画像は assets/ を commit & push してから publish すること');
+console.log('done. commit and push assets/ before publishing');

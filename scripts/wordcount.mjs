@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// コードブロックを除いた word 数。DEV の目安は 1,200-1,800 words
+// Word count excluding code blocks. DEV articles land best at 1,200-1,800 words.
 import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
