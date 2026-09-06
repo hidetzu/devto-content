@@ -6,7 +6,7 @@ tags: llm, go, architecture, algorithms
 canonical_url: https://zenn.dev/hidetzu/articles/verigen-generate-verify-loop
 cover_image: ""
 zenn_source: verigen-generate-verify-loop
-devto_id:
+devto_id: 4585510
 ---
 
 I wrote a puzzle generator whose acceptance rate is **0.26%**. It throws away 99.7% of everything it produces, and that is the design working as intended, not failing. Generating five valid puzzles takes 1,947 attempts and 84 milliseconds.
