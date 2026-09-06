@@ -67,8 +67,9 @@ devto_id:                  # filled in by publish after the first POST
 
 - `published: false` always. Publishing happens by hand from the DEV dashboard
 - `tags`: **at most 4, lowercase alphanumeric only** (no hyphens)
-- `canonical_url` is **required** — it keeps the SEO weight on Zenn and avoids
-  a duplicate-content penalty
+- `canonical_url` is **required whenever `zenn_source` is set** — it keeps the
+  SEO weight on Zenn and avoids a duplicate-content penalty. Leave it empty only
+  for a post with no original elsewhere; DEV then canonicalises to itself
 
 ## Diagrams
 
@@ -93,6 +94,6 @@ npm run publish            # needs DEVTO_API_KEY
 - [ ] Any headings left over from translating `はじめに` / `おわりに`?
 - [ ] Any emoji left in h2?
 - [ ] `tags`: 4 or fewer, lowercase alphanumeric?
-- [ ] Does `canonical_url` point at the right Zenn article?
+- [ ] Does `canonical_url` point at the right Zenn article (or is it empty because there is no original)?
 - [ ] Is `published` still `false`?
 - [ ] Is every Japan-specific assumption either explained or gone?

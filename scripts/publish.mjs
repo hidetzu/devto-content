@@ -31,14 +31,23 @@ if (!dryRun && !apiKey) {
 function validate(slug, data, body) {
   const errs = [];
   if (!data.title) errs.push('no title');
-  if (!data.canonical_url) errs.push('no canonical_url (it must point at the Zenn article)');
+  // A rewrite of a Zenn post must point back at it. A DEV original has no
+  // upstream: leave canonical_url empty and DEV canonicalises to itself.
+  if (data.zenn_source && !data.canonical_url) {
+    errs.push('zenn_source is set but canonical_url is empty');
+  }
+  if (data.canonical_url && !/^https:\/\/\S+$/.test(data.canonical_url)) {
+    errs.push(`canonical_url "${data.canonical_url}" is not an https URL`);
+  }
   if (data.published !== false) errs.push('published is not false');
   const tags = String(data.tags ?? '').split(',').map((t) => t.trim()).filter(Boolean);
   if (tags.length > 4) errs.push(`${tags.length} tags (4 is the maximum)`);
   for (const t of tags) {
     if (!/^[a-z0-9]+$/.test(t)) errs.push(`tag "${t}": lowercase alphanumeric only`);
   }
-  if (/```mermaid/.test(body)) errs.push('mermaid block left in the body (run npm run build first)');
+  // Anchored like the build's own fence regex: an inline mention of a mermaid
+  // fence inside prose is not a block, and must not fail validation.
+  if (/^```mermaid/m.test(body)) errs.push('mermaid block left in the body (run npm run build first)');
   if (/^#\s/m.test(body)) errs.push('h1 in the body (it duplicates the title; drop it)');
   const words = body.replace(/```[\s\S]*?```/g, '').split(/\s+/).filter(Boolean).length;
   if (words > 2200) console.warn(`  warn: ${words} words, long for DEV. Consider splitting it.`);
@@ -92,7 +101,7 @@ for (const [i, file] of files.entries()) {
     published: false,
     tags,
     description: data.description ?? '',
-    canonical_url: data.canonical_url,
+    ...(data.canonical_url ? { canonical_url: data.canonical_url } : {}),
     ...(data.cover_image ? { main_image: data.cover_image } : {}),
     ...(data.series ? { series: data.series } : {}),
   };
@@ -103,7 +112,7 @@ for (const [i, file] of files.entries()) {
     console.log(`[dry-run] ${id ? `PUT ${API}/${id}` : `POST ${API}`} :: ${slug}`);
     console.log(`  title: ${article.title}`);
     console.log(`  tags:  ${tags.join(', ')}`);
-    console.log(`  canon: ${article.canonical_url}`);
+    console.log(`  canon: ${article.canonical_url ?? '(none - DEV original)'}`);
     continue;
   }
 

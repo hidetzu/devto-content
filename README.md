@@ -36,7 +36,7 @@ devto_id:
 ```
 
 - `tags`: at most 4, lowercase alphanumeric only (no hyphens)
-- `canonical_url`: required, points at the original Zenn article
+- `canonical_url`: points at the original Zenn article. Required whenever `zenn_source` is set; empty only for a post written for DEV first
 - `published`: always `false` — posts land on DEV as drafts and are published by hand
 - `zenn_source` and `devto_id` are local bookkeeping and are stripped before the API call
 
@@ -66,7 +66,7 @@ npm run publish -- --only my-post
 
 The first publish `POST`s the article and writes the returned id back into `posts/<slug>.md` as `devto_id`. Every publish after that is a `PUT` against the same article.
 
-`--dry-run` checks for the mistakes that the API accepts silently or rejects unhelpfully: missing `canonical_url`, `published: true`, more than four tags, tags with illegal characters, an `<h1>` duplicating the title, and mermaid blocks that were never built.
+`--dry-run` checks for the mistakes that the API accepts silently or rejects unhelpfully: a `zenn_source` with no `canonical_url`, a `canonical_url` that is not an https URL, `published: true`, more than four tags, tags with illegal characters, an `<h1>` duplicating the title, and mermaid blocks that were never built.
 
 > **Note:** never put the API key in a public dotfiles repository. Use `.env` locally and GitHub Secrets in CI.
 
