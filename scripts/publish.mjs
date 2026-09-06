@@ -57,13 +57,22 @@ function writeBackId(slug, id) {
   writeFileSync(path, updated);
 }
 
-const files = readdirSync(DIST)
-  .filter((f) => f.endsWith('.md'))
-  .filter((f) => !only || f === `${only}.md`);
+const built = readdirSync(DIST).filter((f) => f.endsWith('.md'));
+const files = only ? built.filter((f) => f === `${only}.md`) : built;
 
 if (files.length === 0) {
-  console.error('対象がない。npm run build を先に実行すること');
-  process.exit(1);
+  // 記事がまだ無いのは正常な状態。--only の指定ミスと、build 忘れだけを失敗にする
+  if (only) {
+    console.error(`--only ${only} に該当する記事がない`);
+    process.exit(1);
+  }
+  const sources = readdirSync(POSTS).filter((f) => f.endsWith('.md') && !f.startsWith('_'));
+  if (sources.length > 0) {
+    console.error('dist/ が空。npm run build を先に実行すること');
+    process.exit(1);
+  }
+  console.log('posts/ に記事がない。何もしない');
+  process.exit(0);
 }
 
 let failed = false;
