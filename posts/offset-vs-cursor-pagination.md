@@ -7,7 +7,7 @@ canonical_url: https://zenn.dev/hidetzu/articles/offset-vs-cursor-pagination
 cover_image: ""
 series: "Pagination at 10 million rows"
 zenn_source: offset-vs-cursor-pagination
-devto_id:
+devto_id: 4662224
 ---
 
 `OFFSET 9999980 LIMIT 20` does not skip 9,999,980 rows. It reads every one of them, builds each tuple, and throws it away. To hand back 20 rows it touches 110,659 buffer pages — 865 MB of a 1.2 GB table — and `EXPLAIN` reports it without flinching.
