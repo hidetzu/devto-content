@@ -6,7 +6,7 @@ tags: llm, codegeneration, python, techdebt
 canonical_url: https://zenn.dev/hidetzu/articles/repoexec-dependency-reuse
 cover_image: ""
 zenn_source: repoexec-dependency-reuse
-devto_id:
+devto_id: 4662203
 ---
 
 Both models passed the tests. Both rewrote a function that was sitting in their own prompt, twenty lines up.
