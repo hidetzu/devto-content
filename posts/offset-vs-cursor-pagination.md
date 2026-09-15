@@ -61,6 +61,8 @@ This is not a constant factor. It is a different complexity class.
 
 > **Note:** The cursor timings sit at 0.016–0.027 ms, close to measurement resolution. Do not read the 49,000x as precise. The claim is that the column is flat.
 
+A word on cache state, because it changes how you should read these numbers. The runs are consecutive in a single session, so after the first pass the OS page cache already holds the table — this is the *warm* case, the one that flatters OFFSET. PostgreSQL's own cache never enters into it: the plan for the deepest query reports `shared read=110659` and no `shared hit` at all, because 128 MB of `shared_buffers` cannot hold a 1.2 GB working set. Every run re-fetched every page from outside PostgreSQL. The last section measures what that cost.
+
 ```mermaid
 flowchart LR
     A["OFFSET 9999980<br/>LIMIT 20"] --> B["Start at the head<br/>of the index"]
@@ -195,5 +197,7 @@ So "OFFSET is slow because disks are slow" does not survive contact with the mea
 ## Takeaway
 
 OFFSET is not skipping. It is reading and discarding, because nothing in a B-tree can answer "which row is Nth right now" — and a cursor is fast not because it is cleverer, but because it replaces that question with "which rows come after this key," which an index *can* answer.
+
+If you need something this afternoon and cannot change the API contract: cap how deep the endpoint will go, and use a deferred join underneath that cap. It cut buffers to a quarter here, which buys headroom — but the curve is unchanged, so it postpones the problem rather than removing it. Leaving the curve means the page can no longer be addressed by rank, and that is an API change, not a query change.
 
 Part 2 is the other half: the reason to switch is usually not speed at all, and the four things keyset pagination needs before it works.
