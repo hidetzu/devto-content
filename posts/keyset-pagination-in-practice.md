@@ -7,7 +7,7 @@ canonical_url: https://zenn.dev/hidetzu/articles/offset-vs-cursor-pagination
 cover_image: ""
 series: "Pagination at 10 million rows"
 zenn_source: offset-vs-cursor-pagination
-devto_id:
+devto_id: 4662228
 ---
 
 Speed is OFFSET's second problem. The first is that page 2 can hand you a row you already read on page 1 — and no index will fix it, because it is not a performance bug.
