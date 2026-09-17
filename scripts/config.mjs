@@ -8,4 +8,4 @@ export const RAW_BASE =
   `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}`;
 
 // Bookkeeping keys that never reach the DEV API
-export const LOCAL_KEYS = ['zenn_source', 'devto_id'];
+export const LOCAL_KEYS = ['zenn_source', 'devto_id', 'canonical_exempt'];

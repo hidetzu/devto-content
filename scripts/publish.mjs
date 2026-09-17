@@ -2,7 +2,7 @@
 // Sends dist/*.md to the DEV API v1.
 //   First publish: POST /api/articles. Every one after: PUT /api/articles/:id.
 //   The id DEV assigns is written back into posts/<slug>.md as devto_id.
-import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import matter from 'gray-matter';
@@ -33,8 +33,14 @@ function validate(slug, data, body) {
   if (!data.title) errs.push('no title');
   // A rewrite of a Zenn post must point back at it. A DEV original has no
   // upstream: leave canonical_url empty and DEV canonicalises to itself.
-  if (data.zenn_source && !data.canonical_url) {
-    errs.push('zenn_source is set but canonical_url is empty');
+  // DEV enforces a global uniqueness constraint on canonical_url, so when one
+  // Zenn article is split into a dev.to series only one part can claim it. The
+  // others declare canonical_exempt and are canonicalised to DEV itself.
+  if (data.zenn_source && !data.canonical_url && !data.canonical_exempt) {
+    errs.push('zenn_source is set but canonical_url is empty (set canonical_exempt with a reason if that is deliberate)');
+  }
+  if (data.canonical_url && data.canonical_exempt) {
+    errs.push('canonical_url and canonical_exempt are both set; pick one');
   }
   if (data.canonical_url && !/^https:\/\/\S+$/.test(data.canonical_url)) {
     errs.push(`canonical_url "${data.canonical_url}" is not an https URL`);
@@ -68,6 +74,41 @@ function writeBackId(slug, id) {
     : raw.replace(/^---\n([\s\S]*?)\n---/, `---\n$1\ndevto_id: ${id}\n---`);
   writeFileSync(path, updated);
 }
+
+// dist/ is what gets published, but writeBackId updates posts/. Publishing on
+// a stale dist therefore sends devto_id: null and POSTs a duplicate that the
+// DEV API cannot delete. Refuse rather than create one.
+function assertDistIsFresh() {
+  const stale = readdirSync(POSTS)
+    .filter((f) => f.endsWith('.md') && !f.startsWith('_'))
+    .filter((f) => {
+      try { return statSync(join(POSTS, f)).mtimeMs > statSync(join(DIST, f)).mtimeMs; }
+      catch { return true; } // missing in dist/ counts as stale
+    });
+  if (stale.length) {
+    console.error(`dist/ is older than posts/ for: ${stale.join(', ')}\nRun npm run build first.`);
+    process.exit(1);
+  }
+}
+
+// Two articles cannot share a canonical_url: DEV rejects the second with
+// "canonical_url: has already been taken" at publish time, long after the
+// draft was created. Catch it here instead.
+function assertCanonicalsAreUnique() {
+  const seen = new Map();
+  for (const f of readdirSync(POSTS).filter((f) => f.endsWith('.md') && !f.startsWith('_'))) {
+    const url = matter(readFileSync(join(POSTS, f), 'utf8')).data.canonical_url;
+    if (!url) continue;
+    if (seen.has(url)) {
+      console.error(`${f} and ${seen.get(url)} share canonical_url ${url}\nDEV allows only one article per canonical_url. Give one of them canonical_exempt.`);
+      process.exit(1);
+    }
+    seen.set(url, f);
+  }
+}
+
+assertDistIsFresh();
+assertCanonicalsAreUnique();
 
 const built = readdirSync(DIST).filter((f) => f.endsWith('.md'));
 const files = only ? built.filter((f) => f === `${only}.md`) : built;
@@ -108,7 +149,11 @@ for (const [i, file] of files.entries()) {
     ...(id ? {} : { published: false }),
     tags,
     description: data.description ?? '',
-    ...(data.canonical_url ? { canonical_url: data.canonical_url } : {}),
+    // Omitting the key on a PUT means "leave as is", so clearing a canonical
+    // that DEV already stored takes an explicit null.
+    ...(data.canonical_url
+      ? { canonical_url: data.canonical_url }
+      : data.canonical_exempt ? { canonical_url: null } : {}),
     ...(data.cover_image ? { main_image: data.cover_image } : {}),
     ...(data.series ? { series: data.series } : {}),
   };

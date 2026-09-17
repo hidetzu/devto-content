@@ -71,6 +71,12 @@ devto_id:                  # filled in by publish after the first POST
 - `canonical_url` is **required whenever `zenn_source` is set** — it keeps the
   SEO weight on Zenn and avoids a duplicate-content penalty. Leave it empty only
   for a post with no original elsewhere; DEV then canonicalises to itself
+- **DEV enforces one article per `canonical_url`**, globally. Splitting one Zenn
+  article into a dev.to series therefore breaks the rule above: only one part may
+  point at the Zenn URL. The others set `canonical_exempt: "<reason>"` with an
+  empty `canonical_url` and are canonicalised to DEV. The error, and it only
+  appears when you publish the second one, is
+  `canonical_url: has already been taken`
 
 ## Diagrams
 

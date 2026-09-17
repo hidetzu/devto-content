@@ -3,7 +3,8 @@ title: "The Same Row Twice: Four Things Keyset Pagination Needs"
 published: false
 description: "The real reason to drop OFFSET is not speed - it is that page 2 can show you a row you already saw. Here is what replacing it actually costs to build."
 tags: postgresql, sql, api, database
-canonical_url: https://zenn.dev/hidetzu/articles/offset-vs-cursor-pagination
+canonical_url: ""
+canonical_exempt: "Part 1 holds the canonical for this Zenn article; DEV allows only one"
 cover_image: ""
 series: "Pagination at 10 million rows"
 zenn_source: offset-vs-cursor-pagination
