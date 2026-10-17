@@ -1,5 +1,5 @@
 ---
-title: "Both Said 20240203: WezTerm SSH Multiplexing Between a Mac and Arch"
+title: "My Mac Is Just a Screen Now: 3 Things That Broke With WezTerm SSHMUX"
 published: false
 description: "I made my Mac a screen and my Arch box the only dev environment. Three things broke at the boundary, starting with two WezTerm builds that shared a version string but not a protocol."
 tags: wezterm, terminal, ssh, linux
