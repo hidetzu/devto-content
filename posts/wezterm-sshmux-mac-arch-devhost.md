@@ -6,7 +6,7 @@ tags: wezterm, terminal, ssh, linux
 canonical_url: https://zenn.dev/hidetzu/articles/wezterm-sshmux-mac-arch-devhost
 cover_image: ""
 zenn_source: wezterm-sshmux-mac-arch-devhost
-devto_id:
+devto_id: 4866488
 ---
 
 Homebrew and pacman both told me my WezTerm was `20240203`. They were not the same build, and WezTerm's SSH multiplexing will not connect unless both ends speak the same protocol version.
