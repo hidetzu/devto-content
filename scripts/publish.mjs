@@ -56,8 +56,10 @@ function validate(slug, data, body) {
   // Anchored like the build's own fence regex: an inline mention of a mermaid
   // fence inside prose is not a block, and must not fail validation.
   if (/^```mermaid/m.test(body)) errs.push('mermaid block left in the body (run npm run build first)');
-  if (/^#\s/m.test(body)) errs.push('h1 in the body (it duplicates the title; drop it)');
-  const words = body.replace(/```[\s\S]*?```/g, '').split(/\s+/).filter(Boolean).length;
+  // A "# " line inside a fence is output or a comment, not a heading.
+  const prose = body.replace(/^```[\s\S]*?^```/gm, '');
+  if (/^#\s/m.test(prose)) errs.push('h1 in the body (it duplicates the title; drop it)');
+  const words = prose.split(/\s+/).filter(Boolean).length;
   if (words > 2200) console.warn(`  warn: ${words} words, long for DEV. Consider splitting it.`);
   if (errs.length) {
     console.error(`${slug}:\n  - ${errs.join('\n  - ')}`);
