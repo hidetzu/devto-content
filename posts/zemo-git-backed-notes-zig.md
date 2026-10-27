@@ -5,7 +5,7 @@ description: "I keep the context I hand to AI tools as plain Markdown in a git r
 tags: showdev, zig, cli, git
 canonical_url: ""
 cover_image: ""
-devto_id:
+devto_id: 4930780
 ---
 
 I keep the context I hand to AI coding tools as plain Markdown in a git repository, and a small Zig CLI called zemo syncs it between my machines. The happy path was easy: once zemo has checked that the directory is a repository root, a successful edit runs five git commands, pull, add, diff, commit and push. The real design work was deciding what zemo should say when one of them fails halfway, because a sync that fails quietly leaves you feeding the AI stale context.
